@@ -1,0 +1,979 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STATS.EXE - Neon Arcade Edition</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Pixel Font (Press Start 2P) -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- NEON ARCADE THEME v5.0 --- */
+
+
+        :root {
+            --pixel-font: 'Press Start 2P', cursive;
+            
+            /* Palette: Midnight Synthwave */
+            --retro-bg: #211a29;         /* Deep Plum/Slate Background */
+            --screen-bg: #0f0b15;        /* Void Purple Screen */
+            --text-color: #00f3ff;       /* Electric Cyan Text */
+            --accent-color: #ff0099;     /* Hot Pink Highlights */
+            --primary-button-color: #ffd900; /* Arcade Gold/Yellow */
+            --border-color: #4d3e5e;     /* Muted Purple Bezel */
+            --error-color: #ff2a2a;      /* Bright Red Error */
+        }
+
+
+        /* Base Body and Global CRT Setup */
+        body {
+            font-family: var(--pixel-font);
+            background-color: var(--retro-bg);
+            color: var(--text-color);
+            min-height: 100vh;
+            overflow-y: scroll;
+            padding: 2rem 1rem;
+            animation: global-flicker 20s infinite;
+        }
+
+
+        @keyframes global-flicker {
+            0%, 100% { opacity: 1; }
+            5% { opacity: 0.99; }
+            10% { opacity: 1.01; }
+            20% { opacity: 0.995; }
+            35% { opacity: 1.005; }
+        }
+        
+        /* Global Font and Text Rendering */
+        h1, h2, h3, p, label, button, input, select, option, textarea { /* Added textarea */
+            font-family: var(--pixel-font);
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: none;
+            font-size: 8px; 
+            letter-spacing: 0.08em;
+            line-height: 1.6;
+        }
+
+
+        /* Aesthetic Card Styling: The "Console Screen" with CRT Filter */
+        .retro-screen {
+            position: relative;
+            background-color: var(--screen-bg);
+            border: 4px solid var(--border-color); 
+            border-radius: 6px; /* Slightly softer corners */
+            padding: 32px 20px;
+            margin-top: 16px;
+            box-shadow: 
+                6px 6px 0 var(--border-color), 
+                0 0 20px rgba(255, 0, 153, 0.2), /* Pink outer glow */
+                inset 0 0 15px rgba(0, 243, 255, 0.2); /* Cyan inner glow */
+            overflow: hidden;
+        }
+
+
+        /* --- Deep CRT Effect: Scanlines and Curvature --- */
+        .retro-screen::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: 
+                linear-gradient(rgba(18, 16, 16, 0.2) 1px, transparent 1px) 0% 0% / 100% 4px,
+                linear-gradient(90deg, rgba(255, 0, 153, 0.03), rgba(0, 243, 255, 0.03), rgba(255, 0, 153, 0.03));
+            transform: perspective(1em) rotateX(0.2deg); 
+            filter: blur(0.3px) contrast(1.1);
+            opacity: 0.8;
+            mix-blend-mode: hard-light;
+        }
+
+
+        /* Status Header Bar */
+        #statusBar {
+            background-color: #2d2438;
+            border: 2px solid var(--border-color);
+            border-bottom: none;
+            color: var(--accent-color);
+            padding: 8px 16px;
+            box-shadow: 4px 0 0 var(--border-color);
+            border-radius: 6px 6px 0 0;
+        }
+        #statusLight {
+            animation: flicker 1s infinite alternate;
+            background-color: var(--primary-button-color);
+            box-shadow: 0 0 8px var(--primary-button-color);
+        }
+        @keyframes flicker {
+            from { opacity: 0.6; }
+            to { opacity: 1; }
+        }
+        
+        /* CPU Load Meter (Decorative) */
+        .meter-bar {
+            background-color: #1a1520;
+            height: 6px;
+            width: 50px;
+            border: 1px solid var(--border-color);
+        }
+        .meter-fill {
+            background-color: var(--accent-color);
+            width: 70%; 
+            height: 100%;
+            transition: width 0.3s;
+            box-shadow: 0 0 5px var(--accent-color);
+        }
+
+
+        /* Input/Select Styling */
+        .retro-input {
+            background-color: #1a1520;
+            border: 2px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px 12px;
+            outline: none;
+            margin-top: 4px;
+            transition: all 0.2s;
+            text-shadow: 0 0 2px var(--text-color);
+        }
+        .retro-input:focus {
+            border-color: var(--accent-color);
+            background-color: #251e30;
+            box-shadow: 0 0 8px rgba(255, 0, 153, 0.4); 
+            animation: input-flicker 0.3s infinite alternate;
+        }
+        @keyframes input-flicker {
+            from { opacity: 0.95; }
+            to { opacity: 1.05; }
+        }
+
+
+        /* Toggle Button Styling */
+        .toggle-button {
+            background-color: var(--retro-bg);
+            color: var(--border-color);
+            border: 2px solid var(--border-color);
+            padding: 8px 14px;
+            transition: all 0.1s;
+            cursor: pointer;
+            box-shadow: 2px 2px 0 #111;
+        }
+        .toggle-button:hover:not(.active) {
+             color: var(--text-color);
+             border-color: var(--text-color);
+             box-shadow: 2px 2px 0 var(--text-color);
+        }
+        .toggle-button.active {
+            background-color: var(--accent-color); 
+            color: #fff;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px var(--accent-color);
+            transform: translate(0, -1px);
+            text-shadow: 1px 1px 0 #000;
+        }
+
+
+        /* Primary Button Styling: Action Button */
+        .primary-button {
+            background-color: var(--primary-button-color);
+            color: #000;
+            border: 3px solid #000;
+            transition: all 0.1s ease-in-out; 
+            cursor: pointer;
+            padding: 14px 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            box-shadow: 4px 4px 0 #000; 
+        }
+        .primary-button:hover {
+            background-color: #ffe600;
+            box-shadow: 4px 4px 0 var(--text-color), 0 0 10px var(--primary-button-color);
+        }
+        .primary-button:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 #000;
+        }
+        
+        /* Secondary Button Styling (BACK/LLM) */
+        .secondary-button {
+            background-color: var(--border-color);
+            color: var(--text-color);
+            border: 3px solid #000;
+            box-shadow: 4px 4px 0 #000;
+            font-weight: bold;
+            padding: 12px 20px;
+            transition: all 0.1s;
+        }
+        .secondary-button:hover {
+            background-color: #5d4b73;
+            box-shadow: 4px 4px 0 var(--accent-color);
+        }
+        .secondary-button:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 #000;
+        }
+        
+        /* Custom LLM Button - Same as Primary/Secondary for theme consistency */
+        .llm-button {
+            /* Using primary-button styles for the main LLM action */
+            background-color: var(--accent-color); /* Hot Pink for AI actions */
+            color: #fff;
+            border: 3px solid #000;
+            transition: all 0.1s ease-in-out; 
+            cursor: pointer;
+            padding: 14px 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            box-shadow: 4px 4px 0 #000; 
+        }
+        .llm-button:hover {
+            background-color: #ff33b3;
+            box-shadow: 4px 4px 0 var(--text-color), 0 0 10px var(--accent-color);
+        }
+        .llm-button:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 #000;
+        }
+
+
+        /* Results Value Flickering Effect (Cyan) */
+        .result-value {
+            font-size: 14px;
+            color: var(--primary-button-color); 
+            margin-top: 6px;
+            text-shadow: 0 0 5px rgba(255, 217, 0, 0.8);
+            animation: result-flicker 0.2s infinite alternate; 
+        }
+        
+        @keyframes result-flicker {
+            0% { text-shadow: 0 0 4px var(--primary-button-color), 1px 1px 0px rgba(255, 0, 153, 0.2); }
+            50% { text-shadow: 0 0 8px var(--primary-button-color), -1px -1px 0px rgba(0, 243, 255, 0.2); }
+            100% { text-shadow: 0 0 4px var(--primary-button-color), 0 0 0 rgba(255, 0, 153, 0.1); }
+        }
+
+
+        /* Other Typography */
+        .title-text {
+            font-size: 16px;
+            color: var(--accent-color);
+            text-shadow: 2px 2px 0px #000; 
+            letter-spacing: 0.2em;
+        }
+        .section-title {
+            font-size: 10px;
+            color: var(--text-color);
+            border-bottom: 2px dashed var(--border-color);
+            padding-bottom: 4px;
+        }
+        .screen-label {
+            color: var(--border-color);
+        }
+        
+        /* Specific input label color */
+        .input-label {
+            color: #8a7a9e; /* Muted purple for labels */
+        }
+        
+        /* --- SYMBOL CUSTOMIZATION --- */
+        
+        /* Style for the large, prominent Sample Mean (x̄) */
+        .large-mean-symbol {
+            font-size: 16px; 
+            color: var(--primary-button-color); 
+            text-shadow: 0 0 4px rgba(255, 217, 0, 0.8);
+            display: inline-block;
+            line-height: 1;
+            font-family: var(--pixel-font);
+        }
+        
+        /* General style for other symbols (μ₀, σ, Hₐ, s) */
+        .symbol-text {
+            font-size: 10px; 
+            color: var(--text-color);
+            font-family: var(--pixel-font);
+        }
+        
+        /* Loader Style */
+        .loader {
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid var(--primary-button-color); /* Yellow loader */
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            animation: spin 1s linear infinite;
+        }
+
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center">
+
+
+    <div class="w-full max-w-4xl mx-auto">
+        
+        <!-- Status Bar -->
+        <div id="statusBar" class="flex justify-between items-center text-xs w-full">
+            <div class="flex items-center space-x-3">
+                <div id="statusLight" class="w-2 h-2 rounded-full"></div>
+                <span>SYSTEM: READY</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-1">
+                    <span class="text-[6px] text-gray-500">MEM:</span>
+                    <div class="meter-bar">
+                        <div class="meter-fill"></div>
+                    </div>
+                </div>
+                <span id="currentTime">12:00:00</span>
+            </div>
+        </div>
+
+
+        <!-- Main Screen -->
+        <div id="calculator-card" class="retro-screen w-full">
+            
+            <h1 class="title-text text-center mb-8 uppercase">
+                 Z TEST & T-TEST CALCULATOR
+            </h1>
+            
+            <!-- Test Selection Toggle -->
+            <div class="flex justify-center mb-8 gap-4">
+                <button id="toggleZ" onclick="showScreen('Z')" class="toggle-button">
+                    Z-TEST
+                </button>
+                <button id="toggleT" onclick="showScreen('T')" class="toggle-button">
+                    T-TEST
+                </button>
+            </div>
+            
+            <!-- Screen Label -->
+            <p id="screenLabel" class="screen-label text-center mb-6 uppercase text-[8px]"></p>
+
+
+            <!-- Content Wrapper -->
+            <div class="max-w-3xl mx-auto">
+
+
+                <!-- --------------------------------------- -->
+                <!-- SCREEN 1: INPUTS -->
+                <!-- --------------------------------------- -->
+
+
+                <div id="inputScreen">
+                    <!-- Z-Test Inputs -->
+                    <div id="zTestInputs">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                            <div class="space-y-4">
+                                <h2 class="section-title mb-4">> DATA STREAM: Z</h2>
+                                <div>
+                                    <label for="z_sampleMean" class="block text-[8px] mb-1 input-label">SAMPLE MEAN (<span class="large-mean-symbol">x̄</span>)</label>
+                                    <input type="number" id="z_sampleMean" class="retro-input block w-full" placeholder="e.g. 65.5" step="any" required>
+                                </div>
+                                <div>
+                                    <label for="z_sampleSize" class="block text-[8px] mb-1 input-label">SAMPLE SIZE (N)</label>
+                                    <input type="number" id="z_sampleSize" class="retro-input block w-full" placeholder="e.g. 30" min="2" required>
+                                </div>
+                                <div>
+                                    <label for="z_popStdDev" class="block text-[8px] mb-1 input-label">POPULATION SD (<span class="symbol-text">σ</span>)</label>
+                                    <input type="number" id="z_popStdDev" class="retro-input block w-full" placeholder="e.g. 5.2" min="0.001" step="any" required>
+                                </div>
+                            </div>
+
+
+                            <div class="space-y-4">
+                                <h2 class="section-title mb-4">> PARAMETERS</h2>
+                                <div>
+                                    <label for="z_popMean" class="block text-[8px] mb-1 input-label">HYPOTHESIZED MEAN (<span class="symbol-text">μ₀</span>)</label>
+                                    <input type="number" id="z_popMean" class="retro-input block w-full" placeholder="e.g. 60.0" step="any" required>
+                                </div>
+                                <div>
+                                    <label for="z_alpha" class="block text-[8px] mb-1 input-label">SIGNIFICANCE (<span class="symbol-text">α</span>)</label>
+                                    <select id="z_alpha" class="retro-input block w-full">
+                                        <option value="0.01">0.01 (HIGH)</option>
+                                        <option value="0.05" selected>0.05 (STD)</option>
+                                        <option value="0.10">0.10 (LOW)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="z_testType" class="block text-[8px] mb-1 input-label">DIRECTION (H<span class="symbol-text">ₐ</span>)</label>
+                                    <select id="z_testType" class="retro-input block w-full">
+                                        <option value="two-tailed">Two-Tailed (μ ≠ μ₀)</option>
+                                        <option value="left-tailed">Left-Tailed (μ < μ₀)</option>
+                                        <option value="right-tailed">Right-Tailed (μ > μ₀)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- T-Test Inputs -->
+                    <div id="tTestInputs" class="hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                            <div class="space-y-4">
+                                <h2 class="section-title mb-4">> DATA STREAM: T</h2>
+                                <div>
+                                    <label for="t_sampleMean" class="block text-[8px] mb-1 input-label">SAMPLE MEAN (<span class="large-mean-symbol">x̄</span>)</label>
+                                    <input type="number" id="t_sampleMean" class="retro-input block w-full" placeholder="e.g. 5.1" step="any" required>
+                                </div>
+                                <div>
+                                    <label for="t_sampleSize" class="block text-[8px] mb-1 input-label">SAMPLE SIZE (N)</label>
+                                    <input type="number" id="t_sampleSize" class="retro-input block w-full" placeholder="e.g. 25" min="2" required>
+                                </div>
+                                <div>
+                                    <label for="t_sampleStdDev" class="block text-[8px] mb-1 input-label">SAMPLE SD (<span class="symbol-text">s</span>)</label>
+                                    <input type="number" id="t_sampleStdDev" class="retro-input block w-full" placeholder="e.g. 0.5" min="0.001" step="any" required>
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <h2 class="section-title mb-4">> PARAMETERS</h2>
+                                <div>
+                                    <label for="t_popMean" class="block text-[8px] mb-1 input-label">HYPOTHESIZED MEAN (<span class="symbol-text">μ₀</span>)</label>
+                                    <input type="number" id="t_popMean" class="retro-input block w-full" placeholder="e.g. 5.0" step="any" required>
+                                </div>
+                                <div>
+                                    <label for="t_alpha" class="block text-[8px] mb-1 input-label">SIGNIFICANCE (<span class="symbol-text">α</span>)</label>
+                                    <select id="t_alpha" class="retro-input block w-full">
+                                        <option value="0.01">0.01 (HIGH)</option>
+                                        <option value="0.05" selected>0.05 (STD)</option>
+                                        <option value="0.10">0.10 (LOW)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="t_testType" class="block text-[8px] mb-1 input-label">DIRECTION (H<span class="symbol-text">ₐ</span>)</label>
+                                    <select id="t_testType" class="retro-input block w-full">
+                                        <option value="two-tailed">Two-Tailed (μ ≠ μ₀)</option>
+                                        <option value="left-tailed">Left-Tailed (μ < μ₀)</option>
+                                        <option value="right-tailed">Right-Tailed (μ > μ₀)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Calculation Button -->
+                <div id="calculationButtonDiv" class="mt-10">
+                    <button onclick="executeCalculation()" class="primary-button w-full">
+                        RUN DIAGNOSTICS
+                    </button>
+                </div>
+
+
+
+
+                <!-- --------------------------------------- -->
+                <!-- SCREEN 2: RESULTS -->
+                <!-- --------------------------------------- -->
+                <div id="resultsScreen" class="hidden">
+                    <h2 class="section-title text-center !text-accent-color border-none mb-6">> RESULTS LOG</h2>
+                    
+                    <!-- Key Metrics -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+                        <div class="retro-result-box">
+                            <p class="text-[8px] uppercase text-gray-500 mb-1">Z-SCORE</p>
+                            <p id="testScoreResult" class="result-value">0.0000</p>
+                        </div>
+                        <div class="retro-result-box">
+                            <p class="text-[8px] uppercase text-gray-500 mb-1">P-VALUE</p>
+                            <p id="pValueResult" class="result-value">0.0000</p>
+                        </div>
+                        <div class="retro-result-box">
+                            <p class="text-[8px] uppercase text-gray-500 mb-1">CRIT VAL</p>
+                            <p id="criticalValueResult" class="result-value">0.0000</p>
+                        </div>
+                    </div>
+
+
+                    <!-- Conclusion -->
+                    <div id="conclusionBox" class="p-6 border-2 border-dashed border-gray-700">
+                        <h3 class="text-[10px] text-accent-color mb-2 font-bold uppercase tracking-widest">> ANALYSIS</h3>
+                        <p id="conclusionText" class="text-[8px] leading-relaxed"></p>
+                    </div>
+                    
+                    <!-- LLM Feature Buttons -->
+                    <div class="mt-8 flex flex-col sm:flex-row gap-4">
+                        <button onclick="explainResults()" id="explainBtn" class="llm-button w-full sm:w-1/2 flex items-center justify-center space-x-2">
+                            <div id="explainLoader" class="loader hidden"></div>
+                            <span>✨ EXPLAIN RESULTS</span>
+                        </button>
+                        <button onclick="generateExample()" id="exampleBtn" class="llm-button w-full sm:w-1/2 flex items-center justify-center space-x-2">
+                            <div id="exampleLoader" class="loader hidden"></div>
+                            <span>✨ GENERATE SCENARIO</span>
+                        </button>
+                    </div>
+
+
+                    <!-- LLM Output Box - Styled for external data feed -->
+                    <div id="llmOutputBox" class="mt-8 p-6 border-2 border-dashed hidden" style="border-color: var(--accent-color); background-color: rgba(255, 0, 153, 0.05);">
+                        <h3 id="llmTitle" class="text-[10px] text-accent-color mb-2 font-bold uppercase tracking-widest">> LLM ASSIST: TUTOR MODE</h3>
+                        <p id="llmText" class="text-[8px] leading-relaxed text-text-color"></p>
+                    </div>
+
+
+
+
+                    <!-- Error Box -->
+                    <div id="errorBox" class="mt-8 hidden p-4 border-2 border-dashed" style="color: var(--error-color); border-color: var(--error-color);">
+                        <p class="text-[10px] font-bold uppercase mb-2">> SYSTEM FAILURE</p>
+                        <p id="errorMessage" class="text-[8px]"></p>
+                    </div>
+                    
+                    <!-- Back Button -->
+                    <div class="mt-8 flex justify-center">
+                        <button onclick="showScreen('BACK')" class="secondary-button w-full">
+                            RESTART
+                        </button>
+                    </div>
+                </div>
+            </div> 
+            
+        </div>
+        
+        <div class="mt-6 text-center">
+             <p class="text-[6px] text-gray-600">// NEON_STATS v5.1 // SYSTEM ONLINE</p>
+        </div>
+    </div>
+
+
+    <script>
+        let currentTestType = 'Z'; 
+        let resultsData = {}; 
+        
+        // --- GEMINI API CONFIG ---
+        const API_KEY = ""; 
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
+        
+        function getInputValue(id) {
+            const element = document.getElementById(id);
+            if (!element) return NaN;
+            
+            // For select elements
+            if (element.tagName === 'SELECT') {
+                const parsedValue = +element.value; 
+                return isNaN(parsedValue) ? NaN : parsedValue;
+            }
+            
+            // For input type="number"
+            const value = element.value;
+            // Treat empty string input as NaN for validation purposes later
+            if (value === null || value === undefined || (typeof value === 'string' && value.trim() === '')) {
+                return NaN;
+            }
+            
+            const parsedValue = +value; 
+            return isNaN(parsedValue) ? NaN : parsedValue;
+        }
+
+
+        // --- STATISTICAL UTILITIES ---
+        const StatsUtils = (function() {
+            // MOVED INSIDE to avoid global scope conflicts
+            const C = [0.319381530, -0.356563782, 1.781477937, -1.821255978, 1.330274429];
+            const A1 = -39.6968302866538; const A2 = 220.946098424520; const A3 = -275.928510523097;
+            const B1 = -54.4760987982241; const B2 = 161.585836858049; const B3 = -155.604979852268;
+            const D1 = 14.23235568317; const D2 = 31.53531988889; const D3 = 31.30689254425;
+            const E1 = 1.0; const E2 = 4.32891026048; const E3 = 6.91547886105;
+
+
+            function normalCDF(z) {
+                const sign = z < 0 ? -1 : 1;
+                const absZ = Math.abs(z);
+                const t = 1.0 / (1.0 + 0.2316419 * absZ);
+                let Qz = Math.exp(-0.5 * absZ * absZ) / Math.sqrt(2 * Math.PI);
+                Qz *= t * (C[0] + t * (C[1] + t * (C[2] + t * (C[3] + t * C[4]))));
+                return z > 0 ? 1.0 - Qz : Qz;
+            }
+            
+            function rationalApproximation(p) {
+                const c = 0.5 - p;
+                if (Math.abs(c) < 0.42) {
+                    const z = c * c;
+                    return c * (A1 + z * (A2 + z * A3)) / (1.0 + z * (B1 + z * (B2 + z * B3)));
+                }
+                let x = (p < 0.5) ? Math.log(p) : Math.log(1.0 - p);
+                if (!isFinite(x)) return (p < 0.5) ? -Infinity : Infinity;
+                const y = Math.sqrt(-2.0 * x);
+                const w = y - (D1 + y * (D2 + y * D3)) / (E1 + y * (E2 + y * E3));
+                return p < 0.5 ? -w : w;
+            }
+
+
+            function inverseNormalCDF(p) {
+                if (p <= 0.0 || p >= 1.0) return p <= 0.0 ? -Infinity : Infinity;
+                return rationalApproximation(p);
+            }
+
+
+            return { normalCDF, inverseNormalCDF };
+        })();
+
+
+        // --- UI Logic ---
+
+
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { hour12: false });
+            document.getElementById('currentTime').textContent = timeString;
+        }
+        setInterval(updateClock, 1000);
+        
+        function showMessage(message) {
+            const errorBox = document.getElementById('errorBox');
+            const errorMessage = document.getElementById('errorMessage');
+
+
+            showScreen('RESULTS'); 
+            document.getElementById('conclusionBox').classList.add('hidden'); 
+            document.getElementById('llmOutputBox').classList.add('hidden');
+            document.getElementById('testScoreResult').textContent = 'ERR';
+            document.getElementById('pValueResult').textContent = 'ERR';
+            document.getElementById('criticalValueResult').textContent = 'ERR';
+            
+            errorBox.classList.remove('hidden');
+            errorMessage.textContent = message;
+        }
+
+
+        function clearMessage() {
+            document.getElementById('errorBox').classList.add('hidden');
+            document.getElementById('conclusionBox').classList.remove('hidden');
+            document.getElementById('llmOutputBox').classList.add('hidden');
+        }
+
+
+        function showScreen(type) {
+            const inputScreen = document.getElementById('inputScreen');
+            const resultsScreen = document.getElementById('resultsScreen');
+            const calculationButtonDiv = document.getElementById('calculationButtonDiv');
+            const screenLabel = document.getElementById('screenLabel');
+            const statusText = document.querySelector('#statusBar > div:first-child > span');
+
+
+            if (type === 'Z' || type === 'T') {
+                currentTestType = type;
+                inputScreen.classList.remove('hidden');
+                calculationButtonDiv.classList.remove('hidden');
+                resultsScreen.classList.add('hidden');
+                clearMessage();
+                
+                document.getElementById('toggleZ').classList.toggle('active', type === 'Z');
+                document.getElementById('toggleT').classList.toggle('active', type === 'T');
+                
+                document.getElementById('zTestInputs').classList.toggle('hidden', type === 'T');
+                document.getElementById('tTestInputs').classList.toggle('hidden', type === 'Z');
+
+
+                screenLabel.textContent = `AWAITING INPUT (${type})`;
+                statusText.textContent = "SYSTEM: READY";
+                
+                // Set the correct score name in the results metric box
+                document.querySelector('.retro-result-box p:first-child').textContent = `${type}-SCORE`;
+
+
+
+
+            } else if (type === 'RESULTS') {
+                inputScreen.classList.add('hidden');
+                calculationButtonDiv.classList.add('hidden');
+                resultsScreen.classList.remove('hidden');
+                screenLabel.textContent = `REPORT: GENERATED`;
+                statusText.textContent = "SYSTEM: DONE";
+                
+                // Ensure LLM box is cleared/hidden on new result display
+                document.getElementById('llmOutputBox').classList.add('hidden'); 
+
+
+            } else if (type === 'BACK') {
+                showScreen(currentTestType);
+            }
+        }
+        
+        function executeCalculation() {
+            try {
+                // Simulate CPU Load
+                document.querySelector('.meter-fill').style.width = '95%'; 
+                document.querySelector('#statusBar > div:first-child > span').textContent = "SYSTEM: BUSY";
+                
+                setTimeout(() => {
+                    calculateTest();
+                    document.querySelector('.meter-fill').style.width = '70%'; 
+                }, 100);
+
+
+            } catch (e) {
+                console.error("Calculation failed:", e);
+                document.querySelector('.meter-fill').style.width = '100%'; 
+                document.querySelector('#statusBar > div:first-child > span').textContent = "SYSTEM: ERROR";
+                showMessage(`MATH ERROR: ${e.message}`);
+            }
+        }
+
+
+        function calculateTest() {
+            clearMessage();
+            const type = currentTestType;
+
+
+            let xBar, mu0, stdDev, n, alpha, testType;
+            let stdErrName; 
+
+
+            if (type === 'Z') {
+                xBar = getInputValue('z_sampleMean');
+                mu0 = getInputValue('z_popMean');
+                stdDev = getInputValue('z_popStdDev'); 
+                n = getInputValue('z_sampleSize');
+                alpha = getInputValue('z_alpha');
+                testType = document.getElementById('z_testType').value;
+                stdErrName = 'POPULATION SD (σ)';
+            } else { 
+                xBar = getInputValue('t_sampleMean');
+                mu0 = getInputValue('t_popMean');
+                stdDev = getInputValue('t_sampleStdDev'); 
+                n = getInputValue('t_sampleSize');
+                alpha = getInputValue('t_alpha');
+                testType = document.getElementById('t_testType').value;
+                stdErrName = 'SAMPLE SD (s)';
+            }
+
+
+            // Validation: Use isNaN which catches missing inputs due to getInputValue logic
+            if (isNaN(xBar) || isNaN(mu0) || isNaN(stdDev) || isNaN(n) || isNaN(alpha)) {
+                showMessage('MISSING DATA. CHECK INPUTS.');
+                return;
+            }
+            if (stdDev <= 0) {
+                showMessage(`INVALID SD (${stdErrName}). MUST BE > 0.`);
+                return;
+            }
+            if (n < 2) {
+                showMessage('SAMPLE SIZE TOO SMALL. MIN N=2.');
+                return;
+            }
+            
+            const standardError = stdDev / Math.sqrt(n);
+            let testScore = (xBar - mu0) / standardError;
+            
+            if (!isFinite(testScore)) {
+                showMessage('CALCULATION OVERFLOW. CHECK INPUTS.');
+                return;
+            }
+
+
+            let pValue;
+            let criticalValue;
+            let criticalValues = []; 
+            const testScoreAbs = Math.abs(testScore);
+            const scoreName = type === 'Z' ? 'Z' : 'T';
+            const { normalCDF, inverseNormalCDF } = StatsUtils;
+
+
+            switch (testType) {
+                case 'two-tailed':
+                    pValue = 2 * (1 - normalCDF(testScoreAbs));
+                    criticalValue = inverseNormalCDF(1 - alpha / 2);
+                    criticalValues = [-criticalValue, criticalValue];
+                    break;
+                case 'left-tailed':
+                    pValue = normalCDF(testScore);
+                    criticalValue = inverseNormalCDF(alpha);
+                    criticalValues = [criticalValue];
+                    break;
+                case 'right-tailed':
+                    pValue = 1 - normalCDF(testScore);
+                    criticalValue = inverseNormalCDF(1 - alpha);
+                    criticalValues = [criticalValue];
+                    break;
+            }
+
+
+            let conclusionText;
+            const finalPValue = Math.min(Math.max(pValue, 0), 1); 
+            const rejectNull = finalPValue <= alpha;
+            const alphaSymbol = 'α'; 
+            
+            // Store results for LLM use
+            resultsData = {
+                type: type,
+                score: testScore.toFixed(4),
+                pValue: finalPValue.toFixed(4),
+                alpha: alpha,
+                testType: testType,
+                rejectNull: rejectNull,
+                mu0: mu0,
+                xBar: xBar,
+                n: n,
+                stdDev: stdDev,
+            };
+            
+            if (rejectNull) {
+                conclusionText = `ALERT: SIGNIFICANT DEVIATION.<br>CALCULATED ${scoreName}: ${resultsData.score}<br>P-VALUE: ${resultsData.pValue} < ${alphaSymbol} (${alpha})<br><br><strong>> ACTION: REJECT NULL HYPOTHESIS</strong>`;
+                
+            } else {
+                conclusionText = `STATUS: NOMINAL.<br>CALCULATED ${scoreName}: ${resultsData.score}<br>P-VALUE: ${resultsData.pValue} > ${alphaSymbol} (${alpha})<br><br><strong>> ACTION: RETAIN NULL HYPOTHESIS</strong>`;
+            }
+            
+            if (type === 'T' && n < 30) {
+                 conclusionText += `<br><br><span style="color: var(--primary-button-color);">NOTE: SMALL SAMPLE (N=${n}). Z-APPROX.</span>`;
+            }
+
+
+            document.getElementById('testScoreResult').textContent = resultsData.score;
+            document.getElementById('pValueResult').textContent = resultsData.pValue;
+
+
+            let cvText = (testType === 'two-tailed') 
+                ? `${criticalValues[0].toFixed(4)}, ${criticalValues[1].toFixed(4)}`
+                : criticalValues[0].toFixed(4);
+            document.getElementById('criticalValueResult').textContent = cvText;
+            
+            document.getElementById('conclusionText').innerHTML = conclusionText;
+            
+            const conclusionBox = document.getElementById('conclusionBox');
+            
+            if (rejectNull) {
+                conclusionBox.style.borderColor = 'var(--accent-color)';
+                conclusionBox.style.backgroundColor = 'rgba(255, 0, 153, 0.15)'; 
+                document.querySelector('#conclusionText strong').style.color = 'var(--accent-color)';
+            } else {
+                conclusionBox.style.borderColor = 'var(--text-color)'; 
+                conclusionBox.style.backgroundColor = 'rgba(0, 243, 255, 0.15)'; 
+                document.querySelector('#conclusionText strong').style.color = 'var(--text-color)';
+            }
+            
+            showScreen('RESULTS');
+        }
+        
+        // --- GEMINI LLM FUNCTIONS ---
+        
+        function setLlmLoading(buttonId, isLoading) {
+            const button = document.getElementById(buttonId);
+            const loader = document.getElementById(buttonId.replace('Btn', 'Loader'));
+            
+            if (isLoading) {
+                button.disabled = true;
+                loader.classList.remove('hidden');
+                button.querySelector('span').classList.add('hidden');
+                document.querySelector('#llmOutputBox').classList.remove('hidden');
+                // The loading message is also themed
+                document.getElementById('llmText').innerHTML = '<span style="color: var(--primary-button-color);">PROCESSING... STANDBY.</span>';
+            } else {
+                button.disabled = false;
+                loader.classList.add('hidden');
+                button.querySelector('span').classList.remove('hidden');
+            }
+        }
+        
+        async function callGeminiApi(userQuery, systemPrompt, buttonId, title) {
+            setLlmLoading(buttonId, true);
+            document.getElementById('llmTitle').textContent = `> LLM ASSIST: ${title}`;
+
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+
+
+            let responseText = "ERROR: FAILED TO CONNECT TO LLM CORE.";
+            let retries = 0;
+            const maxRetries = 5;
+            let delay = 1000;
+
+
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                        responseText = text || "LLM returned an empty response. Re-initiate query.";
+                        break; 
+                    } else {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                } catch (error) {
+                    retries++;
+                    if (retries >= maxRetries) {
+                        responseText = `ERROR: Failed after ${maxRetries} attempts. ${error.message}`;
+                        console.error(`Gemini API call failed permanently.`, error);
+                        break;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2; 
+                }
+            }
+            
+            document.getElementById('llmText').textContent = responseText;
+            setLlmLoading(buttonId, false);
+        }
+
+
+        async function explainResults() {
+            if (Object.keys(resultsData).length === 0) {
+                 showMessage('RUN DIAGNOSTICS FIRST.');
+                 return;
+            }
+            document.getElementById('errorBox').classList.add('hidden');
+
+
+            const resultVerb = resultsData.rejectNull ? 'REJECTED' : 'RETAINED';
+            const scoreName = resultsData.type === 'Z' ? 'Z-score' : 'T-score';
+            const hypothesisAction = resultsData.rejectNull ? 
+                `The null hypothesis (H₀: μ = ${resultsData.mu0}) was REJECTED because the p-value (${resultsData.pValue}) is less than alpha (${resultsData.alpha}).` :
+                `The null hypothesis (H₀: μ = ${resultsData.mu0}) was RETAINED because the p-value (${resultsData.pValue}) is greater than alpha (${resultsData.alpha}).`;
+
+
+            const userQuery = `I ran a ${resultsData.type}-test. My ${scoreName} was ${resultsData.score}, and the p-value was ${resultsData.pValue}. The significance level (alpha) was ${resultsData.alpha}. ${hypothesisAction}. Explain this conclusion in simple, non-technical language for a student. Focus on what the result means about the sample and the population mean.`;
+            
+            const systemPrompt = "You are a friendly, non-technical statistics tutor named 'STAT-TUTOR 9000'. Your explanations must be clear and direct, using only text, no markdown, and maintain a 1980s computer terminal conversational style (e.g., use phrases like 'DATA VALID' or 'TRANSMISSION COMPLETE'). Keep it to 3-5 concise sentences.";
+            
+            await callGeminiApi(userQuery, systemPrompt, 'explainBtn', 'STAT-TUTOR 9000');
+        }
+
+
+        async function generateExample() {
+            if (Object.keys(resultsData).length === 0) {
+                 showMessage('RUN DIAGNOSTICS FIRST.');
+                 return;
+            }
+            document.getElementById('errorBox').classList.add('hidden');
+
+
+            const scoreName = resultsData.type === 'Z' ? 'Z' : 'T';
+            
+            const query = `Create a realistic, one-paragraph scenario (like an engineering test, medical study, or business analysis) that would yield the following ${resultsData.type}-test results: Test Type: ${resultsData.testType}. Test Score (${scoreName}): ${resultsData.score}. P-Value: ${resultsData.pValue}. Sample Mean (x̄): ${resultsData.xBar}. Hypothesized Mean (μ₀): ${resultsData.mu0}. Sample Size (N): ${resultsData.n}.`;
+            
+            const systemPrompt = "You are an AI World-Builder named 'SCENARIO-GEN'. Generate a concise, context-rich, one-paragraph narrative or setting that logically results in the provided statistical values. The scenario must be related to engineering or advanced technology. Do not state the final statistical conclusion (reject/retain H0); just set the scene and the test parameters. Use only text, no markdown.";
+
+
+            await callGeminiApi(query, systemPrompt, 'exampleBtn', 'SCENARIO-GEN');
+        }
+        
+        window.onload = function() {
+            updateClock(); 
+            showScreen('Z');
+        };
+    </script>
+</body>
+</html>
